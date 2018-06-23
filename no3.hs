@@ -12,11 +12,12 @@
 type Corner = Int -- a corner
 type Square = Int -- The number that completes a square
 type Location = Int -- The current location
-data CornerName = UpperLeft | UpperRight | LowerLeft deriving (Eq, Show)
+data CornerName = UpperLeft | UpperRight | LowerLeft | LowerRight deriving (Eq, Show)
 
 findCorner :: Int -> Square -> Corner
 findRelevantCorner :: CornerName -> (Square -> Corner)
 getCorner :: Square -> Location -> Corner
+findNextSquare :: Location -> Square
 findNextLocation :: Location -> Location
 
 findCorner x sq = sq - x * ((floor $ sqrt $ fromIntegral sq) - 1)
@@ -26,11 +27,23 @@ findRelevantCorner name
   | name == UpperLeft = findCorner 2
   | name == UpperRight = findCorner 3
 
+getCornerName sq loc
+  | findRelevantCorner LowerLeft sq <= loc = LowerLeft 
+  | findRelevantCorner UpperLeft sq <= loc = UpperLeft 
+  | findRelevantCorner UpperRight sq <= loc = UpperRight 
+  | otherwise = LowerRight
+
 getCorner sq loc
-  | findRelevantCorner LowerLeft sq < loc = findRelevantCorner LowerLeft sq
-  | findRelevantCorner UpperLeft sq < loc = findRelevantCorner UpperLeft sq
-  | findRelevantCorner UpperRight sq < loc = findRelevantCorner UpperRight sq
+  | findRelevantCorner LowerLeft sq <= loc = findRelevantCorner LowerLeft sq
+  | findRelevantCorner UpperLeft sq <= loc = findRelevantCorner UpperLeft sq
+  | findRelevantCorner UpperRight sq <= loc = findRelevantCorner UpperRight sq
   | otherwise = floor $ ((sqrt $ fromIntegral sq) + 1) ^ 2
+
+findNextSquare loc =
+  let root = floor $ sqrt(fromIntegral loc) in
+    (root - ((root - 1) `mod` 2)) ^ 2
+
+
 findNextLocation loc
   | loc == 2 = 1
   | loc == 4 = 1
@@ -40,12 +53,15 @@ findNextLocation loc
 findNextLocation loc = 
   let
     sq = (floor $ sqrt(fromIntegral loc) + 1) ^ 2 ;
-    newSq = (floor $ sqrt(fromIntegral sq) - 1) ^ 2;
+    newSq = findNextSquare loc;
     corner = getCorner sq loc;
     dist = loc - corner - 1;
-    newCorner = getCorner newSq loc
+    cornerName = getCornerName sq loc
+    newCorner = findRelevantCorner cornerName newSq
   in
-    newCorner + dist
+    if corner == loc
+    then loc +1
+    else newCorner + dist
 
 -- Location -> Current distance -> total distance
 manhattanDistance :: Location -> Int -> Int
