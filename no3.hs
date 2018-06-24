@@ -12,20 +12,33 @@
 type Corner = Int -- a corner
 type Square = Int -- The number that completes a square
 type Location = Int -- The current location
+type LocationValue = Int -- the value of the memory location for part 2
 data CornerName = UpperLeft | UpperRight | LowerLeft | LowerRight deriving (Eq, Show)
 
 findCorner :: Int -> Square -> Corner
 findRelevantCorner :: CornerName -> (Square -> Corner)
 getCorner :: Square -> Location -> Corner
+findSquare :: Location -> Square
 findNextSquare :: Location -> Square
 findNextLocation :: Location -> Location
+findMemoryValue :: Location -> LocationValue
+isACorner :: Location -> Bool
 
+isACorner loc = 
+  let sq = findSquare loc in
+    loc == findRelevantCorner LowerLeft sq ||
+    loc == findRelevantCorner UpperLeft sq ||
+    loc == findRelevantCorner UpperRight sq ||
+    loc == sq
+    
 findCorner x sq = sq - x * ((floor $ sqrt $ fromIntegral sq) - 1)
 
 findRelevantCorner name
   | name == LowerLeft = findCorner 1
   | name == UpperLeft = findCorner 2
   | name == UpperRight = findCorner 3
+  | name == LowerRight = findCorner 4
+
 
 getCornerName sq loc
   | findRelevantCorner LowerLeft sq <= loc = LowerLeft 
@@ -34,17 +47,22 @@ getCornerName sq loc
   | otherwise = LowerRight
 
 getCorner sq loc
+  | sq == loc = sq
   | findRelevantCorner LowerLeft sq <= loc = findRelevantCorner LowerLeft sq
   | findRelevantCorner UpperLeft sq <= loc = findRelevantCorner UpperLeft sq
   | findRelevantCorner UpperRight sq <= loc = findRelevantCorner UpperRight sq
-  | otherwise = floor $ ((sqrt $ fromIntegral sq) + 1) ^ 2
+  | otherwise = findNextSquare loc
 
 findNextSquare loc =
   let root = floor $ sqrt(fromIntegral loc) in
     (root - ((root - 1) `mod` 2)) ^ 2
 
+findSquare loc =
+  let root = ceiling $ sqrt(fromIntegral loc) in
+    (root + ((root + 1) `mod` 2)) ^ 2
 
 findNextLocation loc
+  | loc == 1 = 0
   | loc == 2 = 1
   | loc == 4 = 1
   | loc == 6 = 1
@@ -52,7 +70,7 @@ findNextLocation loc
   
 findNextLocation loc = 
   let
-    sq = (floor $ sqrt(fromIntegral loc) + 1) ^ 2 ;
+    sq = findSquare loc;
     newSq = findNextSquare loc;
     corner = getCorner sq loc;
     dist = loc - corner - 1;
@@ -60,16 +78,44 @@ findNextLocation loc =
     newCorner = findRelevantCorner cornerName newSq
   in
     if corner == loc
-    then loc +1
+    then loc - 1
     else newCorner + dist
 
--- Location -> Current distance -> total distance
 manhattanDistance :: Location -> Int -> Int
 
 manhattanDistance loc count
+  | loc == 0 = 0
   | loc == 1 = count
   | otherwise = manhattanDistance (findNextLocation loc) count + 1
 
+findMemoryValue loc 
+  | loc <= 0 = 0
+  | loc == 1 = 1
+  | loc == 2 = 1
+  | loc == 4 = 4
+  | loc == 6 = 10
+  
+findMemoryValue loc =
+  let sq = findSquare loc in
+  if loc == sq
+  then findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc - 1)) + findMemoryValue(findNextLocation(loc - 1) + 1)
+  else if loc == findNextSquare(loc) + 1
+  then findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc + 1))
+  else if loc == findRelevantCorner UpperRight sq || loc == findRelevantCorner UpperLeft sq
+  then findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc - 1))
+  else if loc == findRelevantCorner LowerLeft sq 
+  then findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc - 1))
+  else if isACorner(loc - 1)
+  then findMemoryValue(loc - 1) + findMemoryValue(loc - 2) + findMemoryValue(findNextLocation(loc)) + findMemoryValue(findNextLocation(loc) + 1)
+  else if isACorner(loc + 1)
+  then findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc - 1)) + findMemoryValue(findNextLocation(loc))
+  else if loc == findNextSquare(loc) + 2
+  then findMemoryValue(loc - 1) + findMemoryValue(loc - 2) + findMemoryValue(findNextLocation(loc)) + findMemoryValue(findNextLocation(loc + 1))
+  else findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc)) + findMemoryValue(findNextLocation(loc) + 1) + findMemoryValue(findNextLocation(loc) - 1)
+
+findAnswer x
+  | findMemoryValue(x) > 312051 = x
+  | otherwise = findAnswer(x + 1)
 main :: IO()
 main = print $ show $ findNextLocation 8
 
