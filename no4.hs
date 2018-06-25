@@ -1,4 +1,6 @@
+import Data.List
 hasDuplicates :: [String] -> Bool
+hasAnagrams :: [String] -> Bool
 tryList :: [[String]] -> Int -> Int
 
 hasDuplicates [] = False
@@ -6,9 +8,11 @@ hasDuplicates (x:xs)
   | x `elem` xs = True
   | otherwise = hasDuplicates xs
 
+hasAnagrams list = hasDuplicates [sort x | x <- list]
+
 tryList [] count = count
 tryList (x:xs) count
-  | not $ hasDuplicates(x) = tryList xs (count + 1)
+  | not $ hasAnagrams(x) = tryList xs (count + 1)
   | otherwise = tryList xs count
 
 main:: IO()
