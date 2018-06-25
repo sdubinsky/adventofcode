@@ -92,26 +92,33 @@ findMemoryValue loc
   | loc <= 0 = 0
   | loc == 1 = 1
   | loc == 2 = 1
+  | loc == 3 = 2
   | loc == 4 = 4
+  | loc == 5 = 5
   | loc == 6 = 10
-  
+
+--Special cases:
+--4 corners
+--next to a corner
 findMemoryValue loc =
   let sq = findSquare loc in
-  if loc == sq
-  then findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc - 1)) + findMemoryValue(findNextLocation(loc - 1) + 1)
-  else if loc == findNextSquare(loc) + 1
-  then findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc + 1))
-  else if loc == findRelevantCorner UpperRight sq || loc == findRelevantCorner UpperLeft sq
-  then findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc - 1))
-  else if loc == findRelevantCorner LowerLeft sq 
-  then findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc - 1))
-  else if isACorner(loc - 1)
-  then findMemoryValue(loc - 1) + findMemoryValue(loc - 2) + findMemoryValue(findNextLocation(loc)) + findMemoryValue(findNextLocation(loc) + 1)
-  else if isACorner(loc + 1)
-  then findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc - 1)) + findMemoryValue(findNextLocation(loc))
-  else if loc == findNextSquare(loc) + 2
-  then findMemoryValue(loc - 1) + findMemoryValue(loc - 2) + findMemoryValue(findNextLocation(loc)) + findMemoryValue(findNextLocation(loc + 1))
-  else findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc)) + findMemoryValue(findNextLocation(loc) + 1) + findMemoryValue(findNextLocation(loc) - 1)
+    --lower right corner
+    if loc == sq
+    then findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc - 1)) + findMemoryValue(findNextLocation(loc - 1) + 1)
+    else if loc == sq - 1
+    then findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc - 1)) + findMemoryValue(findNextLocation(loc)) + findMemoryValue(findNextLocation(loc) + 1)
+    else if loc == findNextSquare(loc) + 1
+    then findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc + 1))
+    else if loc == findNextSquare(loc) + 2
+    then findMemoryValue(loc - 1) + findMemoryValue(loc - 2) + findMemoryValue(findNextLocation(loc)) + findMemoryValue(findNextLocation(loc + 1))
+    --other corners
+    else if isACorner loc
+    then findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc - 1))
+    else if isACorner(loc - 1)
+    then findMemoryValue(loc - 1) + findMemoryValue(loc - 2) + findMemoryValue(findNextLocation(loc)) + findMemoryValue(findNextLocation(loc) + 1)
+    else if isACorner(loc + 1)
+    then findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc - 1)) + findMemoryValue(findNextLocation(loc))
+    else findMemoryValue(loc - 1) + findMemoryValue(findNextLocation(loc)) + findMemoryValue(findNextLocation(loc) + 1) + findMemoryValue(findNextLocation(loc) - 1)
 
 findAnswer x
   | findMemoryValue(x) > 312051 = x
